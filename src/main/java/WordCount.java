@@ -12,7 +12,7 @@ public class WordCount {
         // count occurrences
         Map<String, Integer> wordCounts = new TreeMap<String, Integer>();
         while (input.hasNext()) {
-            String next = input.next().replaceAll("\\.", "").replaceAll(",", "").toLowerCase();
+            String next = input.next().replaceAll("\\.", "").replaceAll(",", "").replaceAll(";","").replaceAll(":","").toLowerCase();
             if (!wordCounts.containsKey(next)) {
                 wordCounts.put(next, 1);
             } else {
