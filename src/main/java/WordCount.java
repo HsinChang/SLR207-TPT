@@ -11,21 +11,36 @@ public class WordCount {
 
         // count occurrences
         Map<String, Integer> wordCounts = new TreeMap<String, Integer>();
+        long startTime_0 = System.currentTimeMillis();
         while (input.hasNext()) {
-            String next = input.next().replaceAll("\\.", "").replaceAll(",", "").replaceAll(";","").replaceAll(":","").toLowerCase();
-            if (!wordCounts.containsKey(next)) {
-                wordCounts.put(next, 1);
-            } else {
-                wordCounts.put(next, wordCounts.get(next) + 1);
-            }
+            String next = input.next();
+            //String next = input.next().replaceAll("\\.", "").replaceAll(",", "").replaceAll(";","").replaceAll(":","").toLowerCase();
+                if (!wordCounts.containsKey(next)) {
+                    wordCounts.put(next, 1);
+                } else {
+                    wordCounts.put(next, wordCounts.get(next) + 1);
+                }
         }
 
+        long endTime_0 = System.currentTimeMillis();
+        long totalTime_0 = endTime_0 - startTime_0;
+
         // get cutoff and report frequencies
+        long startTime_1 = System.currentTimeMillis();
         Map<String, Integer> countSortedByNumber = sortByCountValue(wordCounts);
+        long endTime_1 = System.currentTimeMillis();
+        long totalTime_1 = endTime_1 - startTime_1;
+        int ite = 0;
         for (String word : countSortedByNumber.keySet()) {
+            ite = ite + 1;
             int count = countSortedByNumber.get(word);
             System.out.println(word + "\t" + count);
+            if(ite > 50) {
+                break;
+            }
         }
+        System.out.println("Counting: "+ totalTime_0);
+        System.out.println("Sorting: "+ totalTime_1);
     }
 
     public static Map<String, Integer> sortByCountValue(
