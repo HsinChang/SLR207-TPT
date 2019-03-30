@@ -1,21 +1,50 @@
 import java.io.*;
+import java.util.concurrent.*;
 
 public class MASTER {
-    public static void main(String[] args) throws InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("ls", "-al", "/tmp");
+
+    private static String userPrefix = "xizhang@";
+    private static String domain = ".enst.fr";
+    private static String splitsPath = "/tmp/xizhang/splits/";
+    private static String slavePath = "/tmp/xizhang/slave.jar";
+
+    public static void main(String[] args) {
+        final LinkedBlockingQueue<String> lbq = new LinkedBlockingQueue<>();
+
+        ProcessBuilder pb = new ProcessBuilder("java", "-jar", "/tmp/xizhang/slave.jar");
+
+        //solution 1 chosen
         pb.redirectErrorStream(true);
-        Thread.sleep(10000);
+
+        //the thread to get the terminal output of slave
         try {
             Process process = pb.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
+            Thread streamThread = new Thread(
+                    () -> {
+                        try{
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                lbq.add(line);
+                                System.out.print(line);
+                            }
+                            reader.close();
+                        } catch (IOException e){
+                            e.printStackTrace();
+                        }
+                    }
+            );
+            streamThread.start();
+
+            //set timeout for master
+            if (lbq.poll(2, TimeUnit.SECONDS) == null) {
+                System.err.println("timeout");
+                process.destroy();
             }
-            String result = builder.toString();
-            System.out.print(result);
+
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
