@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class MASTER {
 
@@ -8,6 +9,7 @@ public class MASTER {
     private static String splitsPath = "/tmp/xizhang/splits/";
     private static String mapsPath = "/tmp/xizhang/maps/";
     private static String slavePath = "/tmp/xizhang/slave.jar";
+    private static String reducesPath = "/tmp/xizhang/reduces/";
 
     private MASTER(){}
 
@@ -39,7 +41,7 @@ public class MASTER {
         for (int j = 0; j < machines.length; j++) {
             ProcessBuilder pb = new ProcessBuilder("scp", splitsPath + "S" + targetMachines.get(machines[j]) + ".txt", machines[j] +":"+splitsPath);
             Process p = pb.start();
-            p.waitFor();
+            p.waitFor(2,TimeUnit.SECONDS);
             System.out.println("[OK] file distributed on machine " + machines[j]);
         }
         ProcessBuilder[] mappersProcessBuilder = new ProcessBuilder[machines.length];
@@ -51,7 +53,7 @@ public class MASTER {
         }
         long startTime = System.currentTimeMillis();
         // Wait for their completion and read the outputs
-        for (int j = 0; j < machines.length; j++) mappersProcess[j].waitFor();
+        for (int j = 0; j < machines.length; j++) mappersProcess[j].waitFor(20,TimeUnit.SECONDS);
         // Receive the outputs of the mappers
         for (int j = 0; j < machines.length; j++) {
             reader = new BufferedReader(new InputStreamReader(mappersProcess[j].getInputStream()));
@@ -113,7 +115,7 @@ public class MASTER {
         }
         startTime = System.currentTimeMillis();
         for (int j = 0; j < tempNumberProcess; j++) {
-            shuffleDistProcess[j].waitFor();
+            shuffleDistProcess[j].waitFor(20,TimeUnit.SECONDS);
         }
 
         for (int j = 0; j < keys.length; j++) {
@@ -127,7 +129,7 @@ public class MASTER {
             shuffleProcess[j] = shuffleProcessBuilder[j].start();
         }
         for (int j = 0; j < keys.length; j++) {
-            shuffleProcess[j].waitFor();
+            shuffleProcess[j].waitFor(50,TimeUnit.SECONDS);
         }
         System.out.println("[OK] SHUFFLE finished ");
         endTime = System.currentTimeMillis();
@@ -141,13 +143,13 @@ public class MASTER {
         //reduce
         for (int j = 0; j < keys.length; j++) {
             String machine = keysMachineMap.get(keys[j]);
-            reduceProcessBuilder[j] = new ProcessBuilder("ssh", machine, "java", "-jar", slavePath, "2", keys[j], mapsPath + "SM" + j + ".txt", splitsPath+"RM"+j+".txt");
+            reduceProcessBuilder[j] = new ProcessBuilder("ssh", machine, "java", "-jar", slavePath, "2", keys[j], mapsPath + "SM" + j + ".txt", reducesPath+"RM"+j+".txt");
             reduceProcess[j] = reduceProcessBuilder[j].start();
             System.out.println("[OK]reduce of key " + keys[j]+ " begins on machine "+machine);
         }
         startTime = System.currentTimeMillis();
         for (int j = 0; j < keys.length; j++) {
-            reduceProcess[j].waitFor();
+            reduceProcess[j].waitFor(20,TimeUnit.SECONDS);
         }
         endTime = System.currentTimeMillis();
         System.out.println("Phase REDUCE took " + (endTime - startTime)
@@ -155,9 +157,9 @@ public class MASTER {
 
         //print
         startTime = System.currentTimeMillis();
-        for (int j = 0; j<keys.length; j++) {
-            String machine = keysMachineMap.get(keys[j]);
-            ProcessBuilder pb = new ProcessBuilder("ssh", machine, "cat", splitsPath+"RM"+j+".txt");
+        for (int j = 0; j<machines.length; j++) {
+            String machine = machines[j];
+            ProcessBuilder pb = new ProcessBuilder("ssh", machine, "cat", reducesPath+"RM"+"*");
             pb.redirectErrorStream(true);
             Process p = pb.start();
             reader = new BufferedReader(new InputStreamReader(p.getInputStream()));

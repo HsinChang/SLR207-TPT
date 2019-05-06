@@ -8,6 +8,10 @@ import java.util.List;
 
 
 public class DEPLOY {
+	
+	private static String splitsPath = "/tmp/xizhang/splits/";
+    private static String mapsPath = "/tmp/xizhang/maps/";
+    private static String reducesPath = "/tmp/xizhang/reduces/";
 
 	public static void main(String[] args) {
 		BufferedReader br = null, input = null;
@@ -46,6 +50,12 @@ public class DEPLOY {
 				// Process
 				p = pb.start();
 				System.out.println("[OK] Created dir on machine "+m);
+				
+				pb = new ProcessBuilder("ssh", m, "mkdir -p "+splitsPath+" "+mapsPath+" "+reducesPath);
+                p = pb.start();
+
+                System.out.println("[OK] Created subdirs on machine " + m);
+
 
 				// ProcessBuilder for copying slave to remote
 				pb = new ProcessBuilder("scp", slavePath+slaveFile, m+":"+slavePath);

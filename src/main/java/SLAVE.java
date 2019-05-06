@@ -39,7 +39,6 @@ public class SLAVE {
     }
 
     private void map() {
-        System.out.println("[MAP]");
         String[] items = fileToMap.split("/");
         String numberOfFile = items[items.length-1].split("")[1];
         String fileOutput = rootFolder+"maps/UM"+numberOfFile+".txt";
@@ -50,12 +49,13 @@ public class SLAVE {
         try {
             reader = new BufferedReader(new FileReader(fileToMap));
             writer = new BufferedWriter(new FileWriter(fileOutput));
-            String line = reader.readLine();
-
-            String[] splited = line.split(" ");
-            for (int i = 0; i < splited.length; ++i) {
-                keys.add(splited[i]);
-                writer.write(splited[i] + " 1\n");
+            String line = null;
+            while((line = reader.readLine()) != null) {
+            	String[] splited = line.split(" ");
+                for (int i = 0; i < splited.length; ++i) {
+                    keys.add(splited[i]);
+                    writer.write(splited[i] + " 1\n");
+                }
             }
             writer.flush();
             writer.close();
